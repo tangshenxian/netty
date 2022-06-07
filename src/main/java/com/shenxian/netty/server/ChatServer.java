@@ -43,6 +43,10 @@ public class ChatServer {
             serverBootstrap.childHandler(new ChannelInitializer<SocketChannel>() {
                 @Override
                 protected void initChannel(SocketChannel ch) throws Exception {
+                    ch.pipeline().addLast(new ProtocolFrameDecoder());
+                    ch.pipeline().addLast(loggingHandler);
+                    ch.pipeline().addLast(messageCodec);
+
                     // 判断是不是 读空闲时间过长/写空闲时间过长
                     // 5秒内没有读到 channel 的数据，会触发 IdleState.READER_IDLE 事件
                     ch.pipeline().addLast(new IdleStateHandler(5, 0, 0));
@@ -61,12 +65,11 @@ public class ChatServer {
                             // 触发了读空闲事件
                             if (event.state() == IdleState.READER_IDLE) {
                                 log.debug("已经 5秒 没有读到数据了~");
+                                ctx.channel().close();
                             }
                         }
                     });
-                    ch.pipeline().addLast(new ProtocolFrameDecoder());
-                    ch.pipeline().addLast(loggingHandler);
-                    ch.pipeline().addLast(messageCodec);
+
                     ch.pipeline().addLast(loginHandler);
                     ch.pipeline().addLast(chatHandler);
                     ch.pipeline().addLast(groupCreateHandler);
