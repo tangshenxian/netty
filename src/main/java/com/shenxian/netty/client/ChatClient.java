@@ -148,6 +148,18 @@ public class ChatClient {
                                 WAIT_FOR_LOGIN.countDown();
                             }
                         }
+
+                        // 在连接断开时触发
+                        @Override
+                        public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+                            log.debug("连接已经断开");
+                        }
+
+                        // 在出现异常时触发
+                        @Override
+                        public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+                            log.debug("连接已经断开");
+                        }
                     });
                 }
             });
