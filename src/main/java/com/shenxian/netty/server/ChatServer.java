@@ -1,15 +1,12 @@
 package com.shenxian.netty.server;
 
-import com.shenxian.netty.message.LoginRequestMessage;
-import com.shenxian.netty.message.LoginResponseMessage;
 import com.shenxian.netty.protocol.MessageCodecSharable;
 import com.shenxian.netty.protocol.ProtocolFrameDecoder;
-import com.shenxian.netty.server.service.UserServiceFactory;
+import com.shenxian.netty.server.handler.ChatRequestMessageHandler;
+import com.shenxian.netty.server.handler.LoginRequestMessageHandler;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInitializer;
-import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
@@ -27,6 +24,8 @@ public class ChatServer {
         NioEventLoopGroup worker = new NioEventLoopGroup();
         LoggingHandler loggingHandler = new LoggingHandler();
         MessageCodecSharable messageCodec = new MessageCodecSharable();
+        LoginRequestMessageHandler loginHandler = new LoginRequestMessageHandler();
+        ChatRequestMessageHandler chatHandler = new ChatRequestMessageHandler();
         try {
             ServerBootstrap serverBootstrap = new ServerBootstrap();
             serverBootstrap.group(boss, worker);
@@ -37,21 +36,8 @@ public class ChatServer {
                     ch.pipeline().addLast(new ProtocolFrameDecoder());
                     ch.pipeline().addLast(loggingHandler);
                     ch.pipeline().addLast(messageCodec);
-                    ch.pipeline().addLast(new SimpleChannelInboundHandler<LoginRequestMessage>() {
-                        @Override
-                        protected void channelRead0(ChannelHandlerContext ctx, LoginRequestMessage message) throws Exception {
-                            String username = message.getUsername();
-                            String password = message.getPassword();
-                            boolean login = UserServiceFactory.getUserService().login(username, password);
-                            LoginResponseMessage responseMessage;
-                            if (login) {
-                                responseMessage = new LoginResponseMessage(true, "登录成功");
-                            } else {
-                                responseMessage = new LoginResponseMessage(false, "登录失败。用户名或密码错误");
-                            }
-                            ctx.writeAndFlush(responseMessage);
-                        }
-                    });
+                    ch.pipeline().addLast(loginHandler);
+                    ch.pipeline().addLast(chatHandler);
                 }
             });
             Channel channel = serverBootstrap.bind("localhost", 8080).sync().channel();
@@ -64,4 +50,5 @@ public class ChatServer {
         }
 
     }
+
 }
