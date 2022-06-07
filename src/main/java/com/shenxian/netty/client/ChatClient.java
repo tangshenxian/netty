@@ -14,8 +14,10 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.logging.LoggingHandler;
 import lombok.extern.slf4j.Slf4j;
 
-import java.io.IOException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Scanner;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -90,6 +92,7 @@ public class ChatClient {
                                             break;
                                         case "gcreate":
                                             Set<String> members = new HashSet<>(Arrays.asList(s[2].split(",")));
+                                            members.add(username);// 加入自己
                                             ctx.writeAndFlush(new GroupCreateRequestMessage(s[1], members));
                                             break;
                                         case "gmembers":
